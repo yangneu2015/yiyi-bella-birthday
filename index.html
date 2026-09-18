@@ -599,7 +599,7 @@
         </div>
 
         <div class="form-card">
-          <form id="rsvp-form" action="https://formsubmit.co/yangneu2015@gmail.com" method="POST" target="_blank">
+          <form id="rsvp-form">
             <input type="hidden" name="_subject" value="RSVP — Yiyi &amp; Bella's 4th Birthday" />
             <input type="hidden" name="_template" value="table" />
             <input type="hidden" name="_captcha" value="false" />
@@ -637,7 +637,7 @@
             </div>
 
             <button class="submit-button" id="submit-button" type="submit">Send RSVP</button>
-            <p class="submission-note">A confirmation opens in a new tab. Your RSVP is sent automatically—no email app needed.</p>
+            <p class="submission-note">Your RSVP is sent automatically—no email app needed.</p>
             <div id="form-status" class="status" role="status" aria-live="polite"></div>
           </form>
 
@@ -678,15 +678,38 @@
       attendanceInputs.forEach((input) => input.addEventListener('change', updateAttendanceFields));
       updateAttendanceFields();
 
-      form.addEventListener('submit', () => {
-        statusBox.textContent = 'Your RSVP confirmation is opening in a new tab…';
-        statusBox.className = 'status pending show';
-        submitButton.textContent = 'Opening confirmation…';
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
 
-        window.setTimeout(() => {
+        statusBox.className = 'status pending show';
+        statusBox.textContent = 'Sending your RSVP…';
+        submitButton.disabled = true;
+        submitButton.textContent = 'Sending…';
+
+        try {
+          const payload = Object.fromEntries(new FormData(form).entries());
+          const response = await fetch('https://formsubmit.co/ajax/yangneu2015@gmail.com', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+          if (!response.ok) {
+            throw new Error('Submission failed with status ' + response.status);
+          }
+
+          form.style.display = 'none';
+          successCard.classList.add('show');
+          successCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          successCard.focus({ preventScroll: true });
+        } catch (error) {
+          statusBox.className = 'status error show';
+          statusBox.textContent = 'Something went wrong while sending your RSVP. Please try again.';
+          submitButton.disabled = false;
           submitButton.textContent = 'Send RSVP';
-          statusBox.textContent = 'Use the confirmation tab to make sure your RSVP was received.';
-        }, 1800);
+        }
       });
     </script>
   </body>
